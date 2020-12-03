@@ -1,0 +1,8 @@
+---
+title: "Data Experimentation"
+author: "Julian Stone"
+date: 12-3-2020
+output:
+  github_document:
+    toc: true
+---
