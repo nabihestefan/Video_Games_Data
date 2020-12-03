@@ -6,3 +6,46 @@ output:
   github_document:
     toc: true
 ---
+
+```{r library, message=FALSE}
+library(tidyverse)
+```
+
+
+```{r load-data, message=FALSE}
+game_genres <- "./data/game_genres.csv"
+df_genre <- read_csv(game_genres) %>% rename(genre = Genre)
+
+game_ids <- "./data/game_ids.csv"
+df_ids <- read_csv(game_ids)
+
+player_data <- "./data/player_data.csv"
+df_player <- 
+  read_csv(player_data) %>% 
+  filter(action == "play") %>% 
+  select(user_id, name, hours)
+```
+
+```{r summary}
+summary(df_genre)
+summary(df_ids)
+summary(df_player)
+```
+```{r join-data}
+df_game <-
+  df_genre %>% 
+  left_join(df_ids, by = "appid") %>% 
+  select(name, genre) %>% 
+  drop_na() %>% 
+  unique() %>% 
+  mutate(
+    name = str_remove(name, ":"),
+    name = str_replace(name, "’", "'")
+  )
+
+df_data <-
+  df_player %>% 
+  left_join(df_game, by = "name") %>% 
+  drop_na()
+```
+
