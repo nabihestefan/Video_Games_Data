@@ -4,6 +4,13 @@ author: "Julian & Nabih"
 date: "12/8/2020"
 output: html_document
 ---
+
+---
+title: "Report"
+author: "Julian & Nabih"
+date: "12/8/2020"
+output: html_document
+---
 ## Setup
 ```{r setup, echo=FALSE}
 library(tidyverse)
