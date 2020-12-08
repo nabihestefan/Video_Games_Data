@@ -44,20 +44,23 @@ df_game <-
 
 df_data <-
   df_player %>% 
-    left_join(df_game, by = "name") %>% 
-      drop_na()
+    left_join(df_game, by = "name")
+
+df_data[is.na(df_data)] <- "Unidentified"
 
 summary(df_data)
 ```
 
-```{r calculations}
+```{r playtime}
 df_data %>% 
   group_by(genre) %>% 
     summarize(Average_Playtime_Genre = mean(hours))%>% 
       mutate (genre = fct_reorder(genre, Average_Playtime_Genre)) %>% 
         ggplot(aes(Average_Playtime_Genre, genre)) +
         geom_col() 
+```
 
+```{r playtime-percentage}
 df_data %>% 
   group_by (user_id) %>% 
     select(!genre) %>% 
@@ -71,5 +74,21 @@ df_data %>%
                     ggplot(aes(Average_PlayPerc_Genre, genre)) +
                     geom_col()
 ```
+
+```{r FTP-and-Strat}
+df_data %>% 
+  group_by (user_id) %>% 
+    select(!genre) %>% 
+      unique %>% 
+              filter(hours > 10) %>% 
+        summarize(total_plyhrs = sum(hours)) %>% 
+          left_join(df_data, by = "user_id") %>% 
+            mutate(playPerc = hours/total_plyhrs)%>% filter(genre == c("Free to Play")) %>% 
+                group_by(name) %>% 
+                summarize(Average_PlayPerc_Genre = mean(playPerc)) %>% 
+                  filter(Average_PlayPerc_Genre > 0.1) %>% 
+                  mutate (name = fct_reorder(name, Average_PlayPerc_Genre)) %>% 
+                    ggplot(aes(Average_PlayPerc_Genre, name)) +
+                    geom_col()
 ```
 
