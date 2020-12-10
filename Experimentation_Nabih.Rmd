@@ -10,6 +10,34 @@ output:
 ```{r setup, echo=FALSE}
 library(tidyverse)
 library(forcats)
+library(tidypaleo) 
+
+theme_common <- function() {
+  theme_minimal() %+replace%
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(margin = margin(4, 4, 4, 4), angle = 45, size = 16),
+    axis.title.y = element_text(margin = margin(4, 4, 4, 4), size = 16, angle = 90),
+
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 12),
+
+    strip.text.x = element_text(size = 12),
+    strip.text.y = element_text(size = 12),
+
+    panel.grid.major = element_line(color = "grey90"),
+    panel.grid.minor = element_line(color = "grey90"),
+
+    aspect.ratio = 4 / 4,
+
+    plot.margin = unit(c(t = +0, b = +0, r = +0, l = +0), "cm"),
+    plot.title = element_text(size = 18),
+    plot.title.position = "plot",
+    plot.subtitle = element_text(size = 16),
+    plot.caption = element_text(size = 12)
+  )
+}
 ```
 
 ```{r load-data, message=FALSE}
@@ -58,47 +86,41 @@ df_data %>%
       unique() %>% 
         ggplot(aes(fct_infreq(genre))) +
         geom_bar(stat = "count") +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))+
+        labs(
+          x = "Genre",
+          y = "Player Counts"
+        ) 
 ```
 
 ```{r playtime}
-df_data %>% 
-  group_by(genre) %>% 
-    summarize(Average_Playtime_Genre = mean(hours))%>% 
-      mutate (genre = fct_reorder(genre, Average_Playtime_Genre)) %>% 
-        ggplot(aes(Average_Playtime_Genre, genre)) +
-        geom_col() 
+avg_playtime <- df_data %>% 
+                  group_by(genre) %>% 
+                    summarize(Playtime = mean(hours))%>% 
+                      mutate (genre = fct_reorder(genre, Playtime)) 
+
+
+avg_perc <- df_data %>% 
+              group_by (user_id) %>% 
+                select(!genre) %>% 
+                  unique %>% 
+                    summarize(total_plyhrs = sum(hours)) %>% 
+                      left_join(df_data, by = "user_id") %>% 
+                        mutate(playPerc = hours/total_plyhrs)%>% 
+                          group_by(genre) %>% 
+                            summarize(PlayPercentage = mean(playPerc)) %>% 
+                              mutate (genre = fct_reorder(genre, PlayPercentage))
+
+df_averages <-
+  avg_playtime %>% 
+    left_join(avg_perc, by = "genre") 
+df_averages %>% 
+      ggplot(aes(y=genre)) +
+      geom_col(aes(x=Playtime, position="dodge", fill ="A")) +
+      geom_col(aes(x=PlayPercentage))+
+      scale_x_continuous(name="Average Playtime", sec.axis = sec_axis(~./500, name = "Average Play Percentage"))
+
 ```
 
-```{r playtime-percentage}
-df_data %>% 
-  group_by (user_id) %>% 
-    select(!genre) %>% 
-      unique %>% 
-        summarize(total_plyhrs = sum(hours)) %>% 
-              filter(total_plyhrs > 20) %>%
-          left_join(df_data, by = "user_id") %>% 
-            mutate(playPerc = hours/total_plyhrs)%>% 
-              group_by(genre) %>% 
-                summarize(Average_PlayPerc_Genre = mean(playPerc)) %>% 
-                  mutate (genre = fct_reorder(genre, Average_PlayPerc_Genre)) %>% 
-                    ggplot(aes(Average_PlayPerc_Genre, genre)) +
-                    geom_col()
-```
 
-```{r FTP-and-Strat}
-df_data %>% 
-  group_by (user_id) %>% 
-    select(!genre) %>% 
-      unique %>% 
-        summarize(total_plyhrs = sum(hours)) %>%  
-          left_join(df_data, by = "user_id") %>% 
-            mutate(playPerc = hours/total_plyhrs)%>% filter(genre == c("Free to Play")) %>% 
-                group_by(name) %>% 
-                summarize(Average_PlayPerc_Genre = mean(playPerc)) %>% 
-                  filter(Average_PlayPerc_Genre > 0.1) %>% 
-                  mutate (name = fct_reorder(name, Average_PlayPerc_Genre)) %>% 
-                    ggplot(aes(Average_PlayPerc_Genre, name)) +
-                    geom_col()
-```
 
