@@ -10,11 +10,35 @@ output: html_document
 library(tidyverse)
 library(forcats)
 
-theme_common <- function() {
+theme_common1 <- function() {
   theme_minimal() %+replace%
   theme(
     axis.text.x = element_text(size = 10, angle = 90, vjust = 0.5, hjust = 1),
-    axis.text.y = element_text(size = 10),
+    axis.text.y = element_text(size = 10, vjust = 0.5, hjust = 1),
+    axis.title.x = element_text(margin = margin(4, 4, 4, 4), size = 16),
+    axis.title.y = element_text(margin = margin(4, 4, 4, 4), size = 16, angle = 90),
+
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 10),
+
+    strip.text.x = element_text(size = 10),
+    strip.text.y = element_text(size = 10),
+
+    panel.grid.major = element_line(color = "grey90"),
+    panel.grid.minor = element_line(color = "grey90"),
+    plot.margin = unit(c(t = +0, b = +0, r = +0, l = +0), "cm"),
+    plot.title = element_text(size = 18),
+    plot.title.position = "plot",
+    plot.subtitle = element_text(size = 16),
+    plot.caption = element_text(size = 120)
+  )
+}
+
+theme_common2 <- function() {
+  theme_minimal() %+replace%
+  theme(
+    axis.text.x = element_text(size = 10, vjust = 0.5, hjust = 1),
+    axis.text.y = element_text(size = 10, vjust = 0.5, hjust = 1),
     axis.title.x = element_text(margin = margin(4, 4, 4, 4), size = 16),
     axis.title.y = element_text(margin = margin(4, 4, 4, 4), size = 16, angle = 90),
 
@@ -82,7 +106,7 @@ df_data %>%
           x = "Genre",
           y = "Player Counts"
         ) + 
-        theme_common()
+        theme_common1()
 ```
 
 ```{r playtime}
@@ -113,6 +137,10 @@ df_averages <-
 df_averages %>% 
       ggplot(aes(y=genre)) +
       geom_col(aes(x=time, fill = type), position="dodge")+
-      scale_x_continuous(name="Average Playtime", sec.axis = sec_axis(~./264, name = "Average Play Percentage"))
-
+      scale_x_continuous(name="Average Playtime", sec.axis = sec_axis(~./264, name = "Average Play Percentage"))+
+      labs(
+        title = "Playtime and Play Percentage for different Genres",
+        y = "Genre"
+      ) + 
+      theme_common2()
 ```
