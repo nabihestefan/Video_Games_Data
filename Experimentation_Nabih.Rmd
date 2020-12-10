@@ -57,7 +57,8 @@ df_data %>%
     select(user_id, genre) %>% 
       unique() %>% 
         ggplot(aes(fct_infreq(genre))) +
-        geom_histogram(stat = "count")
+        geom_bar(stat = "count") +
+        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
 
 ```{r playtime}

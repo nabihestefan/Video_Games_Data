@@ -45,7 +45,44 @@ df_game <-
 
 df_data <-
   df_player %>% 
-  left_join(df_game, by = "name") %>% 
-  drop_na()
+  left_join(df_game, by = "name")
+
+df_data[is.na(df_data)] <- "Unidentified"
 ```
 
+```{r}
+df_data %>% 
+  group_by(genre) %>% 
+  summarise(
+    mean = mean(hours)
+  ) %>% 
+  mutate(genre = fct_reorder(genre, mean)) %>% 
+  ggplot(aes(mean, genre)) +
+  geom_col()
+```
+
+```{r}
+df_data %>% 
+  group_by(user_id) %>% 
+  summarise(total = sum(hours)) %>% 
+  left_join(df_data, by = "user_id") %>% 
+  mutate(prop = hours/total) %>% 
+  group_by(genre) %>% 
+  summarise(avg_pct = mean(prop)) %>% 
+  mutate(genre = fct_reorder(genre, avg_pct)) %>% 
+  ggplot(aes(avg_pct, genre)) +
+  geom_col()
+```
+
+```{r}
+df_data %>% 
+  filter(genre == "Strategy") %>% 
+  group_by(name) %>% 
+  summarise(
+    mean = mean(hours)
+  ) %>% 
+  mutate(name = fct_reorder(name, mean)) %>% 
+  filter(mean > 50) %>% 
+  ggplot(aes(mean, name)) +
+  geom_col()
+```
