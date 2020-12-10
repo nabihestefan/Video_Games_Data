@@ -10,7 +10,6 @@ output:
 ```{r setup, echo=FALSE}
 library(tidyverse)
 library(forcats)
-library(tidypaleo) 
 
 theme_common <- function() {
   theme_minimal() %+replace%
@@ -98,8 +97,6 @@ avg_playtime <- df_data %>%
                   group_by(genre) %>% 
                     summarize(Playtime = mean(hours))%>% 
                       mutate (genre = fct_reorder(genre, Playtime)) 
-
-
 avg_perc <- df_data %>% 
               group_by (user_id) %>% 
                 select(!genre) %>% 
@@ -109,16 +106,21 @@ avg_perc <- df_data %>%
                         mutate(playPerc = hours/total_plyhrs)%>% 
                           group_by(genre) %>% 
                             summarize(PlayPercentage = mean(playPerc)) %>% 
-                              mutate (genre = fct_reorder(genre, PlayPercentage))
-
+                              mutate (genre = fct_reorder(genre, PlayPercentage)) %>% 
+                                mutate (PlayPercentage = PlayPercentage*264)
 df_averages <-
   avg_playtime %>% 
-    left_join(avg_perc, by = "genre") 
+    left_join(avg_perc, by = "genre") %>% 
+      pivot_longer(
+        names_to = "type",
+        values_to = "time",
+        cols = c(Playtime, PlayPercentage)
+      )
+
 df_averages %>% 
       ggplot(aes(y=genre)) +
-      geom_col(aes(x=Playtime, position="dodge", fill ="A")) +
-      geom_col(aes(x=PlayPercentage))+
-      scale_x_continuous(name="Average Playtime", sec.axis = sec_axis(~./500, name = "Average Play Percentage"))
+      geom_col(aes(x=time, fill = type), position="dodge")+
+      scale_x_continuous(name="Average Playtime", sec.axis = sec_axis(~./264, name = "Average Play Percentage"))
 
 ```
 

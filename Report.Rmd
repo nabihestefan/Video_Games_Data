@@ -5,17 +5,36 @@ date: "12/8/2020"
 output: html_document
 ---
 
----
-title: "Report"
-author: "Julian & Nabih"
-date: "12/8/2020"
-output: html_document
----
 ## Setup
 ```{r setup, echo=FALSE}
 library(tidyverse)
+library(forcats)
+
+theme_common <- function() {
+  theme_minimal() %+replace%
+  theme(
+    axis.text.x = element_text(size = 10, angle = 90, vjust = 0.5, hjust = 1),
+    axis.text.y = element_text(size = 10),
+    axis.title.x = element_text(margin = margin(4, 4, 4, 4), size = 16),
+    axis.title.y = element_text(margin = margin(4, 4, 4, 4), size = 16, angle = 90),
+
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 10),
+
+    strip.text.x = element_text(size = 10),
+    strip.text.y = element_text(size = 10),
+
+    panel.grid.major = element_line(color = "grey90"),
+    panel.grid.minor = element_line(color = "grey90"),
+    plot.margin = unit(c(t = +0, b = +0, r = +0, l = +0), "cm"),
+    plot.title = element_text(size = 18),
+    plot.title.position = "plot",
+    plot.subtitle = element_text(size = 16),
+    plot.caption = element_text(size = 120)
+  )
+}
 ```
-## Load Data 
+## Load, Clean, and Join Data
 ```{r load-data, message=FALSE}
 game_genres <- "./data/game_genres.csv"
 df_genre <- read_csv(game_genres) %>% rename(genre = Genre)
@@ -29,13 +48,7 @@ df_player <-
   filter(action == "play") %>% 
   select(user_id, name, hours)
 ```
-## First look into our thre datasets
-```{r summary}
-summary(df_genre)
-summary(df_ids)
-summary(df_player)
-```
-## Join and clean data
+
 ```{r join-data}
 df_game <-
   df_genre %>% 
@@ -55,4 +68,51 @@ df_data <-
 df_data[is.na(df_data)] <- "Unidentified"
 
 summary(df_data)
+```
+
+```{r player-count}
+df_data %>% 
+  filter(hours != 0) %>% 
+    select(user_id, genre) %>% 
+      unique() %>% 
+        ggplot(aes(fct_infreq(genre))) +
+        geom_bar(stat = "count") +
+        labs(
+          title = "Player Count per Genre",
+          x = "Genre",
+          y = "Player Counts"
+        ) + 
+        theme_common()
+```
+
+```{r playtime}
+avg_playtime <- df_data %>% 
+                  group_by(genre) %>% 
+                    summarize(Playtime = mean(hours))%>% 
+                      mutate (genre = fct_reorder(genre, Playtime)) 
+avg_perc <- df_data %>% 
+              group_by (user_id) %>% 
+                select(!genre) %>% 
+                  unique %>% 
+                    summarize(total_plyhrs = sum(hours)) %>% 
+                      left_join(df_data, by = "user_id") %>% 
+                        mutate(playPerc = hours/total_plyhrs)%>% 
+                          group_by(genre) %>% 
+                            summarize(PlayPercentage = mean(playPerc)) %>% 
+                              mutate (genre = fct_reorder(genre, PlayPercentage)) %>% 
+                                mutate (PlayPercentage = PlayPercentage*264)
+df_averages <-
+  avg_playtime %>% 
+    left_join(avg_perc, by = "genre") %>% 
+      pivot_longer(
+        names_to = "type",
+        values_to = "time",
+        cols = c(Playtime, PlayPercentage)
+      )
+
+df_averages %>% 
+      ggplot(aes(y=genre)) +
+      geom_col(aes(x=time, fill = type), position="dodge")+
+      scale_x_continuous(name="Average Playtime", sec.axis = sec_axis(~./264, name = "Average Play Percentage"))
+
 ```
