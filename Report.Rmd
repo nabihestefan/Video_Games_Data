@@ -4,22 +4,24 @@ author: "Julian & Nabih"
 date: "12/8/2020"
 output: html_document
 ---
+# Abstract
+
 
 ## Setup
-```{r setup, echo=FALSE}
+```{r setup, echo=FALSE, message=FALSE}
 library(tidyverse)
 library(forcats)
 
-theme_common1 <- function() {
+theme_playtime <- function() {
   theme_minimal() %+replace%
   theme(
-    axis.text.x = element_text(size = 10, angle = 90, vjust = 0.5, hjust = 1),
+    axis.text.x = element_text(size = 10, vjust = 0.5, hjust = 1),
     axis.text.y = element_text(size = 10, vjust = 0.5, hjust = 1),
-    axis.title.x = element_text(margin = margin(4, 4, 4, 4), size = 16),
-    axis.title.y = element_text(margin = margin(4, 4, 4, 4), size = 16, angle = 90),
+    axis.title.x = element_text(margin = margin(4, 4, 4, 4), size = 12),
+    axis.title.y = element_text(margin = margin(4, 4, 4, 4), size = 12, angle = 90),
 
-    legend.title = element_text(size = 16),
-    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 8),
 
     strip.text.x = element_text(size = 10),
     strip.text.y = element_text(size = 10),
@@ -27,18 +29,18 @@ theme_common1 <- function() {
     panel.grid.major = element_line(color = "grey90"),
     panel.grid.minor = element_line(color = "grey90"),
     plot.margin = unit(c(t = +0, b = +0, r = +0, l = +0), "cm"),
-    plot.title = element_text(size = 18),
+    plot.title = element_text(margin = margin(b=10), size = 18),
     plot.title.position = "plot",
     plot.subtitle = element_text(size = 16),
     plot.caption = element_text(size = 120)
   )
 }
 
-theme_common2 <- function() {
+theme_genres <- function() {
   theme_minimal() %+replace%
   theme(
-    axis.text.x = element_text(size = 10, vjust = 0.5, hjust = 1),
-    axis.text.y = element_text(size = 10, vjust = 0.5, hjust = 1),
+    axis.text.x = element_text(size = 12, angle = 90, vjust = 0.5, hjust = 1),
+    axis.text.y = element_text(size = 12, vjust = 0.5, hjust = 1),
     axis.title.x = element_text(margin = margin(4, 4, 4, 4), size = 16),
     axis.title.y = element_text(margin = margin(4, 4, 4, 4), size = 16, angle = 90),
 
@@ -51,15 +53,26 @@ theme_common2 <- function() {
     panel.grid.major = element_line(color = "grey90"),
     panel.grid.minor = element_line(color = "grey90"),
     plot.margin = unit(c(t = +0, b = +0, r = +0, l = +0), "cm"),
-    plot.title = element_text(size = 18),
+    plot.title = element_text(margin = margin(t=5, b=5), size = 24),
     plot.title.position = "plot",
     plot.subtitle = element_text(size = 16),
     plot.caption = element_text(size = 120)
   )
 }
 ```
+
+
+# Background
+
+
+# Question and Hypothesis
+Given our interest in videogames and Steam data, we were wondering: Are there certain genres of games that gamers tend to spend more of their time playing compared to others? We hypothesized that role-playing games (RPG’s) and massive multiplayer online (MMO) games would tend to have larger playtime given that they normally have more playable content compared to other genres.
+
+# Dataset 
+
+
 ## Load, Clean, and Join Data
-```{r load-data, message=FALSE}
+```{r load-data, echo=FALSE, message=FALSE}
 game_genres <- "./data/game_genres.csv"
 df_genre <- read_csv(game_genres) %>% rename(genre = Genre)
 
@@ -73,7 +86,7 @@ df_player <-
   select(user_id, name, hours)
 ```
 
-```{r join-data}
+```{r join-data, echo=FALSE, message=FALSE}
 df_game <-
   df_genre %>% 
   left_join(df_ids, by = "appid") %>% 
@@ -94,7 +107,49 @@ df_data[is.na(df_data)] <- "Unidentified"
 summary(df_data)
 ```
 
-```{r player-count}
+# Graphs
+
+## Time Player vs Percentage of Time Played
+```{r TimeVsPercentage}
+avg_playtime <- df_data %>% 
+                  group_by(genre) %>% 
+                    summarize(Playtime = mean(hours))%>% 
+                      mutate (genre = fct_reorder(genre, Playtime)) %>% 
+                                mutate (Playtime = Playtime/264)
+avg_perc <- df_data %>% 
+              group_by (user_id) %>% 
+                select(!genre) %>% 
+                  unique %>% 
+                    summarize(total_plyhrs = sum(hours)) %>% 
+                      left_join(df_data, by = "user_id") %>% 
+                        mutate(playPerc = hours/total_plyhrs)%>% 
+                          group_by(genre) %>% 
+                            summarize(PlayPercentage = mean(playPerc)) %>% 
+                              mutate (genre = fct_reorder(genre, PlayPercentage)) 
+df_averages <-
+  avg_playtime %>% 
+    left_join(avg_perc, by = "genre") %>% 
+      pivot_longer(
+        names_to = "type",
+        values_to = "time",
+        cols = c(Playtime, PlayPercentage)
+      ) 
+
+df_averages %>% 
+      ggplot(aes(y=genre)) +
+      geom_col(aes(x=time, fill = type), position="dodge")+
+      scale_x_continuous(name="Average Play Percentage", sec.axis = sec_axis(~.*264, name = "Average Playtime"))+
+      labs(
+        title = "Playtime and Play Percentage for Different Genres",
+        y = "Genre",
+        fill = "Variable"
+      ) + 
+      guides(fill=guide_legend(reverse = TRUE)) +
+      theme_playtime()
+```
+
+## Number of Players per Genre
+```{r playersPerGenre, fig.height=7}
 df_data %>% 
   filter(hours != 0) %>% 
     select(user_id, genre) %>% 
@@ -106,41 +161,12 @@ df_data %>%
           x = "Genre",
           y = "Player Counts"
         ) + 
-        theme_common1()
+        theme_genres()
 ```
 
-```{r playtime}
-avg_playtime <- df_data %>% 
-                  group_by(genre) %>% 
-                    summarize(Playtime = mean(hours))%>% 
-                      mutate (genre = fct_reorder(genre, Playtime)) 
-avg_perc <- df_data %>% 
-              group_by (user_id) %>% 
-                select(!genre) %>% 
-                  unique %>% 
-                    summarize(total_plyhrs = sum(hours)) %>% 
-                      left_join(df_data, by = "user_id") %>% 
-                        mutate(playPerc = hours/total_plyhrs)%>% 
-                          group_by(genre) %>% 
-                            summarize(PlayPercentage = mean(playPerc)) %>% 
-                              mutate (genre = fct_reorder(genre, PlayPercentage)) %>% 
-                                mutate (PlayPercentage = PlayPercentage*264)
-df_averages <-
-  avg_playtime %>% 
-    left_join(avg_perc, by = "genre") %>% 
-      pivot_longer(
-        names_to = "type",
-        values_to = "time",
-        cols = c(Playtime, PlayPercentage)
-      )
 
-df_averages %>% 
-      ggplot(aes(y=genre)) +
-      geom_col(aes(x=time, fill = type), position="dodge")+
-      scale_x_continuous(name="Average Playtime", sec.axis = sec_axis(~./264, name = "Average Play Percentage"))+
-      labs(
-        title = "Playtime and Play Percentage for different Genres",
-        y = "Genre"
-      ) + 
-      theme_common2()
-```
+# Conclusions
+
+
+# Next Steps
+One of the things we would like to do after this is perform a similar type of analysis on [this](https://steam.internet.byu.edu/) dataset we found. The reason we didn't use this dataset in this project is the amount of time we had. This is a 17Gb dataset, and in our project schedule we wouldn't have been able to reliable go through all this data.
