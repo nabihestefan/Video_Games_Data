@@ -196,14 +196,15 @@ df_data %>%
   filter(hours != 0) %>% 
     select(user_id, genre) %>% 
       unique() %>% 
-        ggplot(aes(fct_infreq(genre))) +
+        ggplot(aes(fct_rev(fct_infreq(genre)))) +
         geom_bar(stat = "count") +
         labs(
           title = "Player Count per Genre",
           x = "Genre",
           y = "Player Counts"
         ) + 
-        theme_genres()
+        theme_playtime() +
+        coord_flip()
 ```
 
 ![](Report_files/figure-gfm/playersPerGenre-1.png)<!-- -->

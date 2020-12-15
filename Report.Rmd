@@ -164,20 +164,21 @@ In this first graph, we can see that there is a strong relationship between the 
 
 
 ## Number of Players per Genre
-```{r playersPerGenre, fig.height=7, warning=FALSE}
+```{r playersPerGenre, warning=FALSE}
 #Since we already have the data we just need to plot a geom_bar plot
 df_data %>% 
   filter(hours != 0) %>% 
     select(user_id, genre) %>% 
       unique() %>% 
-        ggplot(aes(fct_infreq(genre))) +
+        ggplot(aes(fct_rev(fct_infreq(genre)))) +
         geom_bar(stat = "count") +
         labs(
           title = "Player Count per Genre",
           x = "Genre",
           y = "Player Counts"
         ) + 
-        theme_genres()
+        theme_playtime() +
+        coord_flip()
 ```
 
 In this second graph we can see how many players in our data set are users of a given genre. This graph complements our previous graph beautifully for two reasons. First, some apps, especially the non-game ones, have a low user count but a very high play time and percentage. This makes a lot of sense, a photographer uses Photo Editing apps most of their time and for very long times, but there are few of these people in comparison to gamers. The second thing we can see is again Strategy an Free to Play games rising above most of the other genres, with the only exception being Action games, which are more widely played due to being multiplayer, but are normally shorter than Strategy and Free to Play games, explaining why they didn't show up in the top spots of the previous graph.
