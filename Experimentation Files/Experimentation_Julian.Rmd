@@ -86,3 +86,43 @@ df_data %>%
   ggplot(aes(mean, name)) +
   geom_col()
 ```
+
+```{r}
+avg_playtime <- df_data %>% 
+                  group_by(genre) %>% 
+                    summarize(Playtime = mean(hours))%>% 
+                      mutate (genre = fct_reorder(genre, Playtime)) 
+
+
+avg_perc <- df_data %>% 
+              group_by (user_id) %>% 
+                select(!genre) %>% 
+                  unique %>% 
+                    summarize(total_plyhrs = sum(hours)) %>% 
+                      left_join(df_data, by = "user_id") %>% 
+                        mutate(playPerc = hours/total_plyhrs)%>% 
+                          group_by(genre) %>% 
+                            summarize(PlayPercentage = mean(playPerc)) %>% 
+                              mutate (genre = fct_reorder(genre, PlayPercentage))
+
+df_averages <-
+  avg_playtime %>% 
+    left_join(avg_perc, by = "genre") 
+
+df_averages %>% 
+  select(genre, Playtime, PlayPercentage) %>% 
+  pivot_longer(
+    names_to = "variable",
+    values_to = "value",
+    cols = !genre
+  )
+  # ggplot(aes(x = genre)) +
+  # geom_bar(aes(y = Playtime)) +
+  # geom_bar(aes(y = PlayPercentage)) +
+  # geom_col(position = "dodge")
+  # scale_x_continuous(
+  #   name = "Average Playtime",
+  #   sec.axis = sec_axis(~./500, name = "Average Play Percentage")
+  # )
+```
+

@@ -2,7 +2,9 @@
 title: "Report"
 author: "Julian & Nabih"
 date: "12/8/2020"
-output: html_document
+output:
+  github_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE, warning=FALSE}
@@ -116,7 +118,7 @@ summary(df_data)
 # Graphs
 
 ## Time Player vs Percentage of Time Played
-```{r TimeVsPercentage, warning=FALSE}
+```{r TimeVsPercentage, message=FALSE, warning=FALSE}
 #Calculate the Average Playtime per Genre for all the Genres we have. Scale it down for plotting against Play Percentage.
 avg_playtime <- df_data %>% 
                   group_by(genre) %>% 
@@ -158,7 +160,7 @@ df_averages %>%
       theme_playtime()
 ```
 
-In this first graph, we can see that there is a strong relationship between the time played, and what percentage of a player’s time is spend on a single genre. This makes sense, the more a person plays the higher this percentage should become. We can see some outliers here, like Audio Production, and Software Training which have high times but low percentages. These are probably due to the fact that both of these normally involve another app (audio normally leads to video and software training leads to other softwares), so it might be very long to use but the other app might take longer, thus lowering the percentage. We can also see that in both Playtime and Playtime Percentage, Strategy and Free-to-Play games rise above all the other genres, even the non-game related ones.
+In this first graph, we can see that there is a strong relationship between the time played, and what percentage of a player’s time is spend on a single genre. This makes sense as the more a person plays the higher this percentage should become. We can see some outliers here, like Audio Production, and Software Training which have high times but low percentages. These are probably due to the fact that both of these normally involve another app (audio normally leads to video and software training leads to other softwares), so it might be very long to use but the other app might take longer, thus lowering the percentage. We can also see that in both Playtime and Playtime Percentage, Strategy and Free-to-Play games rise above all the other genres, even the non-game related ones.
 
 
 ## Number of Players per Genre
